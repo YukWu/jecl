@@ -8,13 +8,10 @@
 #include "Mutex.hpp"
 #include "CondVariable.hpp"
 
-#ifdef TEST
-class ThreadPoolTest;
-#endif
 
 namespace bedrock
 {
-	//extern DWORD G_WORKER_KEY;
+	extern pthread_key_t  G_WORKER_KEY;
 
 	/**
      * Provides an easy way to execute assorted functions 
@@ -38,14 +35,12 @@ namespace bedrock
 	static ThreadPool* getCurrentThreadPool();
 	static int getCurrentThreadKey();
     private:
-		// TESTER(::ThreadPoolTest)
-
         class Worker
         {
         public:
             Worker(ThreadPool* owner, int id, bool active = true);
             ~Worker();
-    
+
             void enqueue(bedrock::callback::Functor* cb, bool delete_callback);
             void pause();
             void resume();
@@ -63,15 +58,14 @@ namespace bedrock
 
             static void _releaseCallback(FunctorHolder& fh);
 
-			//TESTER(::ThreadPoolTest)
             friend class ThreadPool;
-			ThreadPool*               _owner;
-			int                       _threadkey;
+            ThreadPool*               _owner;
+            int                       _threadkey; //线程key
             Mutex                     _lock;
-            std::list<FunctorHolder>  _callbacks;
-            CondVariable              _callbacks_cv;
+            std::list<FunctorHolder>  _callbacks; //任务队列
+            CondVariable              _callbacks_cv; //条件变量
             pthread_t                 _thread;
-            bool                      _active;
+            bool                      _active; //线程是否运行中，由condvariable实现
 
         static void _releaseWorker(Worker* w)
             { delete w; }
