@@ -1,7 +1,7 @@
 
 
 #include "CondVariable.hpp"
-
+#include <iostream>
 using namespace bedrock;
 
 CondVariable::CondVariable(Mutex& m):_mutex(m){
@@ -21,7 +21,7 @@ void CondVariable::signalAll(){
 }
 
 void CondVariable::wait(){
-	pthread_cond_wait(&_cond,_mutex.getNativeAddress());
+	pthread_cond_wait(&_cond,&(_mutex._lock));
 }
 
 

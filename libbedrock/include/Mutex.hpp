@@ -22,7 +22,7 @@ namespace bedrock{
 			pthread_mutex_t getNative(){return _lock;}
 			pthread_mutex_t* getNativeAddress(){return &_lock;}
 
-		private:
+		public:
 			pthread_mutex_t _lock;
 	};
 };
