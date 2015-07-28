@@ -20,7 +20,7 @@ namespace bedrock{
 			static void cancellation_cleanup(void* arg);
 		private:
 			/*用于同步条件变量的锁对象*/
-			Mutex _mutex;
+			Mutex& _mutex;
 			/* posix 条件变量 */
 			pthread_cond_t _cond;
 	};
