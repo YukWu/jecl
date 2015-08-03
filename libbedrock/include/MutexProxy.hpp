@@ -15,7 +15,7 @@ namespace bedrock{
 			MutexProxy(Mutex& m):_m(m){ _m.lock();}
 			~MutexProxy(){ _m.unlock(); }
 		private:
-			Mutex &_m;
+			Mutex& _m;
 	};
 };
 

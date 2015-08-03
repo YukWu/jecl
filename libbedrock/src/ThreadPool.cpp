@@ -182,18 +182,17 @@ void ThreadPool::Worker::_releaseCallback(FunctorHolder& fh){
 ThreadPool::Worker::~Worker(){
 	pthread_exit((void*)0);
 	_lock.lock();
-	for_each(_callbacks.begin(),_callbacks.end(),
-			_releaseCallback);
+	for_each(_callbacks.begin(),_callbacks.end(),_releaseCallback);
 	_lock.unlock();
 }
 
 void ThreadPool::Worker::enqueue(bedrock::callback::Functor* cb,bool delete_functor){
 	_lock.lock();
-
 	FunctorHolder fh = {cb,delete_functor};
 	_callbacks.push_back(fh);
-	if(_active)
+	if(_active){
 		_callbacks_cv.signal();
+	}
 	_lock.unlock();
 }
 
