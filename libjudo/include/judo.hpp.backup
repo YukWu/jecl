@@ -1,0 +1,121 @@
+
+
+
+#ifndef INCL_JUDO_H
+#define INCL_JUDO_H
+
+#include <assert.h>
+#include "../expat/expat.h"
+
+#include <cstdio>
+#include <cstring>
+#include <list>
+#include <map>
+#include <string>
+#include <set>
+#include <algorithm>
+
+
+/**
+	Core namespace for Jabber Universal Document Objects
+ **/
+
+namespace judo{
+
+	class XMLAccumulator;
+
+	/**
+	 	Parent class for all XML objects
+	 **/
+	class Node{
+		public:
+			enum Type{
+				ntElement,
+				ntCDATA
+			};
+			/**
+			 	Primary constructor
+				@param name Name of this element
+				@param type Node type classifier
+			 **/
+			Node(const std::string& name, Type ntype):_name(name),_type(ntype){}
+			virtual ~Node(){}
+		public:
+			/**
+			 	Accessor for the nodes name
+				@return Reference to the name of the node
+			 **/
+			const std::string& getName() const{
+				return _name;
+			}
+
+			/**
+			 	Accessor for the nodes type
+				@return the type of the node(element cdata)
+			 **/
+			Node::Type getType() const{
+				retun _type;
+			}
+
+			/**
+			 	Accessor for the XML string representation of the Node.
+				This is a virtual abstract method that is implemented by
+				the child classes.
+				@return the xml representation of an Node.
+			 **/
+			virtual std::string toString() const = 0;
+
+			/**
+			 	Accumulator entry point for recursive xml serialization.
+				This is a virtual abstract method that is implemented
+				by subclasses.
+				@param acc An instance of an XMLAccumulator
+			 **/
+			virtual void accumulate(XMLAccumulator& acc) const = 0;
+		protected:
+			std::string _name;
+			Node::Type  _type;
+			Node();
+	};
+
+	//Utility routines
+	void unescape(const char* src,size_t srcLen,std::string& dest,bool append = false);
+	std::string escape(const std::string& src);
+
+	class XMLAccumulator{
+		public:
+			XMLAccumulator(std::string& s): _result(s){}
+			void operator() (const Node*n){
+				n->accumulate(*this);
+			}
+			void operator()(const std::pair<std::string,std::string> p){
+				_result += " "+p.first+"='"+escape(p.second)+"'";
+			}
+			template <class T>
+			XMLAccumulator& operator<<(T data){ 
+				_result += data; return *this; 
+			}
+    	private:
+			std::string& _result;
+	};
+
+	/**
+       Character data storage class
+    */
+    class CDATA :  public Node{
+
+    	public:
+    		/**
+                 Default constructor.
+        	*/
+        	CDATA(const char* text, size_t textsz, bool escaped = false)
+            	: Node("#CDATA", Node::ntCDATA){
+				if (escaped){
+		    		unescape(text, textsz, _text);
+				}
+				else{
+		    		_text.assign(text, textsz);
+				}
+			}
+    };
+};

@@ -1,0 +1,31 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: testjudo - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "D:\DOCUME~1\wgj\LOCALS~1\Temp\RSP22.tmp" with contents
+[
+cppunitd.lib testrunnerd.lib /nologo /dll /incremental:yes /pdb:"C:\g\dev\jecl-win\Output/testjudo.pdb" /debug /machine:I386 /out:"C:\g\dev\jecl-win\Output/testjudo.dll" /implib:"C:\g\dev\jecl-win\Output/testjudo.lib" /pdbtype:sept 
+".\testjudo___Win32_Debug\CDATATest.obj"
+".\testjudo___Win32_Debug\ElementStreamTest.obj"
+".\testjudo___Win32_Debug\ElementTest.obj"
+".\testjudo___Win32_Debug\GlobalsTest.obj"
+".\testjudo___Win32_Debug\stdafx.obj"
+".\testjudo___Win32_Debug\test.obj"
+".\testjudo___Win32_Debug\TestPlugInInterfaceImpl.obj"
+"\DEV\JECL-WIN\LIBJUDO\Debug\libjudo.lib"
+]
+Creating command line "link.exe @D:\DOCUME~1\wgj\LOCALS~1\Temp\RSP22.tmp"
+<h3>Output Window</h3>
+Linking...
+
+
+
+<h3>Results</h3>
+testjudo.dll - 0 error(s), 0 warning(s)
+</pre>
+</body>
+</html>
