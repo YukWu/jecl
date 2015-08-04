@@ -1,7 +1,9 @@
 
 #include "Timer.hpp"
 #include "MutexProxy.hpp"
+#include <iostream>
 #include <signal.h>
+
 using namespace bedrock;
 using namespace std;
 
@@ -57,9 +59,10 @@ inline void deleteEntry(Timer::Entry* e){
 	delete e;
 }
 
-Timer::Timer(int interval):_next_key(1),_interval(interval),_counter(1){
+Timer::Timer(int interval):_next_key(1),_interval(interval),_counter(1),_runstate(true){
 	int r = pthread_create(&_thread,0,_run,this);
-	assert(r==0);
+	if(r!=0)
+		std::cerr<<"thread create fail"<<std::endl;
 }
 
 
@@ -68,13 +71,17 @@ void enqueueDeleteEntry(Timer::Entry* e){
 }
 
 Timer::~Timer(){
-	pthread_exit(&_thread);
-	struct sigaction act;
-	act.sa_handle = NULL;
-	act.sa_flags = 0;
-	sigempty(&act.sa_mask);
-	sigaction(SIGUSR1,&act,NULL);
+	_runstate = false;
+	pthread_join(_thread,NULL);
+	/*
+	//pthread_cancel(_thread);
+	//struct sigaction act;
+	//act.sa_handler = NULL;
+	//act.sa_flags = 0;
+	//sigemptyset(&act.sa_mask);
+	//sigaction(SIGUSR1,&act,NULL);
 	
+	*/
 	//walk the list and delete all the entries
 	for_each(_entrylist.begin(),_entrylist.end(),enqueueDeleteEntry);
 }
@@ -119,7 +126,7 @@ void Timer::unschedule(int key){
 
 
 /**
-	This function gets the current value of the counter.Basically, the number of _interval seconds that have gone by since the Timer was created.This is useful for stamping an object's last access time and then timing it out if that stamp is a certain age.I put this in here because locking a mutex,getting a value ,and then unlocking the mutex is something on the order of 12 times faster than calling time(),at least on Linux.
+This function gets the current value of the counter.Basically, the number of _interval seconds that have gone by since the Timer was created.This is useful for stamping an object's last access time and then timing it out if that stamp is a certain age.I put this in here because locking a mutex,getting a value ,and then unlocking the mutex is something on the order of 12 times faster than calling time(),at least on Linux.
 **/
 unsigned int Timer::getCounter(void){
 	MutexProxy mp(_lock);
@@ -131,16 +138,30 @@ void* Timer::_run(void* arg){
 	timer->run();
 	return NULL;
 }
-
+/*
 void Timer::_timer_hit(int signo,siginfo_t* t,void* arg){
-	Timer* timer = (Timer*)((*t).si_value.si_ptr);
+	Timer* timer = (Timer*)((*t).si_value.sival_ptr);
 	MutexProxy mp(timer->_lock);
 
 	apply_remove_if(timer->_entrylist,P_EntryComplete(timer->_counter));
 	++timer->_counter;
 }
+*/
+void Timer::_hit(void* arg){
+	Timer* timer = (Timer*)arg;
+	MutexProxy(timer->_lock);
+	apply_remove_if(timer->_entrylist,P_EntryComplete(timer->_counter));
+	++timer->_counter;
+}
+
+void Timer::_releaselock(void* arg){
+	Mutex* m = (Mutex*)arg;
+	pthread_mutex_trylock(m->getNativeAddress());
+	pthread_mutex_unlock(m->getNativeAddress());
+}
 
 void Timer::run(void){
+	/*
 	struct sigaction act;
 	union sigval tsval;
 	tsval.sival_ptr = this;
@@ -148,10 +169,22 @@ void Timer::run(void){
 	act.sa_flags = SA_SIGINFO;
 	sigemptyset(&act.sa_mask);
 	sigaction(SIGUSR1,&act,NULL);
-
-	while(true){
-		sleep(_interval);
-
-		sigqueue(getpid(),SIGUSR1,tsval);
+	*/
+	struct timeval delay;
+	pthread_cleanup_push(_releaselock,&_lock);
+	delay.tv_sec = _interval;
+	delay.tv_usec = 0;
+	int err;
+	while(_runstate){
+		delay.tv_sec = _interval;
+		delay.tv_usec = 0;
+		do{
+		 err = select(0,NULL,NULL,NULL,&delay);
+		}while(err<0 && errno==EINTR);
+		//sigqueue(getpid(),SIGUSR1,tsval);
+		_hit(this);
 	}
+	std::cout<<"out of the loop"<<std::endl;
+	pthread_cleanup_pop(1);
+	pthread_exit(0);
 }

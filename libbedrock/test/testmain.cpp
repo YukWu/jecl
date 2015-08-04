@@ -22,7 +22,7 @@ void* _stressTestEnqueueThread(void* arg){
 	ThreadPool* p = (ThreadPool*)arg;
 
 	std::cerr<<pthread_self()<<"  enqueue thread started"<<std::endl;
-	for(int i=0;i<10000000;i++){
+	for(int i=0;i<1000000;i++){
 		p->enqueue(bedrock::callback::wrap(inc_counter));
 	}
 	std::cerr<<"\t"<<pthread_self()<<"  enqueue thread is end"<<std::endl;
@@ -37,7 +37,7 @@ void stressTest(){
 		pthread_create(&id,NULL,_stressTestEnqueueThread,&p);
 	}
 	G_counter_lock.lock();
-	while(G_counter!=30000000){
+	while(G_counter!=3000000){
 		G_counter_lock.unlock();
 		sleep(1);
 		G_counter_lock.lock();

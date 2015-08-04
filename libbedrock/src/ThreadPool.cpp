@@ -180,7 +180,10 @@ void ThreadPool::Worker::_releaseCallback(FunctorHolder& fh){
 }
 
 ThreadPool::Worker::~Worker(){
-	pthread_exit((void*)0);
+	/**
+attention: pthread_cancel can kill worker thread immediately,but the threads might unable to clean up/deconstruct their resource,such as unlock the mutex.So if you rebort the threadpool, it probaly cause dead lock.
+	 **/
+	pthread_cancel(_thread);
 	_lock.lock();
 	for_each(_callbacks.begin(),_callbacks.end(),_releaseCallback);
 	_lock.unlock();
@@ -222,6 +225,9 @@ void* ThreadPool::Worker::run(void* arg){
 	Worker *worker = (Worker*)arg;
 	pthread_key_create(&G_WORKER_KEY,NULL);
 	pthread_setspecific(G_WORKER_KEY,worker);
+	//set cancel able anytime
+	pthread_setcancelstate(PTHREAD_CANCEL_ENABLE,NULL);
+	pthread_setcanceltype(PTHREAD_CANCEL_DEFERRED,NULL);
 	worker->_lock.lock();
 	while(1){
 		while(!worker->_callbacks.empty() && worker->_active){

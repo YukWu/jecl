@@ -8,6 +8,11 @@
 #include <unistd.h>
 #include <assert.h>
 #include <pthread.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <sys/select.h>
+#include <errno.h>
+
 
 namespace bedrock{
 	class Timer{
@@ -29,8 +34,10 @@ namespace bedrock{
 			};
 		protected:
 			static void* _run(void* arg);
-			static void  _timer_hit(int,siginfo_t*,void*);
+			//static void  _timer_hit(int,siginfo_t*,void*);
+			static void  _hit(void* arg);
 			void run();
+			static void  _releaselock(void* arg);
 
 		private:
 			Timer(const Timer&);
@@ -42,6 +49,7 @@ namespace bedrock{
 			int          _next_key;
 			unsigned int _counter;
 			const int    _interval;
+			bool         _runstate;
 	};
 }
 

@@ -6,6 +6,7 @@
 #include <string>
 #include "Mutex.hpp"
 #include "CondVariable.hpp"
+#include <stdlib.h>
 
 
 namespace bedrock{
